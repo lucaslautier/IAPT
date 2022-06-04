@@ -20,13 +20,31 @@ def getWords():
   
   valids = []
   allWords = []
+  tmpWord = ""
+  fnlWord = ""
   f = io.open("malta-wordle.txt", mode="r", encoding="utf-8")
   for line in f:
-    allWords.append(line.split(None, 1)[0]) # add only first word
+    #get first word in line (contains word)
+    currWord = line.split(None, 1)[0].lower()
+    
+    # if no "għ" or "ie" are found, this is appended
+    fnlWord = currWord
+
+    #find and change "għ" or "ie" to make it one letter ("ie" = $ || "għ" = /)
+    for letter in range(0,len(currWord)-1):
+      if(currWord[letter] == "i" and currWord [letter+1] == "e"):
+        tmpWord = currWord[:letter] + "$" + currWord[letter+1:]
+        fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
+
+      if(currWord[letter] == "g" and currWord [letter+1] == "ħ"):
+        tmpWord = currWord[:letter] + "/" + currWord[letter+1:]
+        fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
+
+    allWords.append(fnlWord)
 
   for currWord in allWords:
+    #remove tags and artikli (invalid words)
     if len(currWord) == 5 and currWord[-1] != '-' and currWord[0] != '<':
-
       valids.append(currWord)
 
   FIVEL_WORDS = valids
@@ -37,12 +55,29 @@ def getWords():
 def solve():
   valid_words = getWords()
   valid_words = list(dict.fromkeys(valid_words))
-  for i in range(len(valid_words)):
-    valid_words[i] = valid_words[i].lower()
+  tmpGuess = ""
+  fnlGuess = ""
+  # for i in range(len(valid_words)):
+  #   valid_words[i] = valid_words[i].lower()
   
   while True:
     guess = make_guess(valid_words)
-    print("Guess: " + guess.upper())
+    outputGuess = guess
+    outputGuess = guess.replace("$", "IE")
+    outputGuess = guess.replace("/", "GĦ")
+    # for letter in range(0,len(guess)-1):
+    #   if(guess[letter] == "i" and guess[letter+1] == "e"):
+    #     tmpGuess = guess[:letter] + "$" + guess[letter+1:]
+    #     fnlGuess = tmpGuess[:letter+1] + "" + tmpGuess[letter+2:]
+
+    #   if(guess[letter] == "g" and guess [letter+1] == "ħ"):
+    #     tmpGuess = guess[:letter] + "/" + guess[letter+1:]
+    #     fnlGuess = tmpGuess[:letter+1] + "" + tmpGuess[letter+2:]
+
+
+
+
+    print("Guess: " + outputGuess.upper())
     result = collect_result()
     if result == CORRECT:
         print("I won!")
