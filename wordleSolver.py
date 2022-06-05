@@ -1,6 +1,21 @@
 import os
 import io
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time 
+
 CORRECT = '!!!!!'
+# PATH = "IAPT\chromedriver.exe"
+
+driver = webdriver.Chrome(ChromeDriverManager().install())
+
+# driver.get("https://wordle-malti.github.io/")
+
 
 # #gets all the words
 # def getWords():
@@ -15,32 +30,31 @@ CORRECT = '!!!!!'
 #           FIVEL_WORDS = valids
 #         return FIVEL_WORDS
 
-
 def getWords():
-  
   valids = []
   allWords = []
   tmpWord = ""
   fnlWord = ""
-  f = io.open("malta-wordle.txt", mode="r", encoding="utf-8")
+  # f = io.open("malta-wordle.txt", mode="r", encoding="utf-8")
+  f = io.open("dictionary.txt", mode="r", encoding="utf-8")
   for line in f:
     #get first word in line (contains word)
     currWord = line.split(None, 1)[0].lower()
     
     # if no "għ" or "ie" are found, this is appended
-    fnlWord = currWord
+    # fnlWord = currWord
 
     #find and change "għ" or "ie" to make it one letter ("ie" = $ || "għ" = /)
-    for letter in range(0,len(currWord)-1):
-      if(currWord[letter] == "i" and currWord [letter+1] == "e"):
-        tmpWord = currWord[:letter] + "$" + currWord[letter+1:]
-        fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
+    # for letter in range(0,len(currWord)-1):
+    #   if(currWord[letter] == "i" and currWord [letter+1] == "e"):
+    #     tmpWord = currWord[:letter] + "$" + currWord[letter+1:]
+    #     fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
 
-      if(currWord[letter] == "g" and currWord [letter+1] == "ħ"):
-        tmpWord = currWord[:letter] + "/" + currWord[letter+1:]
-        fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
+    #   if(currWord[letter] == "g" and currWord [letter+1] == "ħ"):
+    #     tmpWord = currWord[:letter] + "/" + currWord[letter+1:]
+    #     fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
 
-    allWords.append(fnlWord)
+    allWords.append(currWord)
 
   for currWord in allWords:
     #remove tags and artikli (invalid words)
@@ -51,34 +65,67 @@ def getWords():
     
   return FIVEL_WORDS
 
+
+def accept(driver):
+    driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
+    time.sleep(1)
+    driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
+    time.sleep(1)
+    driver.find_element(By.CSS_SELECTOR, "button.swal2-deny.swal2-styled").click()
+    time.sleep(1)
+
 #main class
 def solve():
+  # open website and accept terms
+  driver.get("https://wordle-malti.github.io/")
+
+  accept(driver)
+  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
+  # time.sleep(1)
+  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
+  # time.sleep(1)
+  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
+  # time.sleep(1)
+
   valid_words = getWords()
   valid_words = list(dict.fromkeys(valid_words))
-  tmpGuess = ""
-  fnlGuess = ""
   # for i in range(len(valid_words)):
   #   valid_words[i] = valid_words[i].lower()
-  
+  guessCnt = 0
   while True:
+    guessCnt += 1
     guess = make_guess(valid_words)
-    outputGuess = guess
-    outputGuess = guess.replace("$", "IE")
-    outputGuess = guess.replace("/", "GĦ")
-    # for letter in range(0,len(guess)-1):
-    #   if(guess[letter] == "i" and guess[letter+1] == "e"):
-    #     tmpGuess = guess[:letter] + "$" + guess[letter+1:]
-    #     fnlGuess = tmpGuess[:letter+1] + "" + tmpGuess[letter+2:]
+    # outputGuess = guess
+    # outputGuess = guess.replace("$", "IE")
+    # outputGuess = guess.replace("/", "GĦ")
 
-    #   if(guess[letter] == "g" and guess [letter+1] == "ħ"):
-    #     tmpGuess = guess[:letter] + "/" + guess[letter+1:]
-    #     fnlGuess = tmpGuess[:letter+1] + "" + tmpGuess[letter+2:]
+    output_guess(driver, guess)
+    
+    # write.send_keys("baqra")
+    
+    # write guess into website
+    # driver.find_element(By.CSS_SELECTOR, "td.guess_box.ng-binding.ng-scope").click()
+    # actions = ActionChains(driver)
+    # # actions.send_keys("papra")
+    # actions.send_keys(outputGuess)
+    # actions.send_keys(Keys.ENTER)
+    # # actions.send_keys(outputGuess)
+    # actions.perform()
+
+    # get result
+    #get class - grey iws "td", orange has .orange green has .green
+    #table = driver.find_element(By.ID, "inp_table" )
+    # ele = driver.find_element(By.XPATH, "//table/tbody/tr[1]/td[5]")
+    # print(ele.get_attribute("class"))
+    #print(ele.get_attribute("background-color"))
 
 
-
-
-    print("Guess: " + outputGuess.upper())
-    result = collect_result()
+    # write.send_keys(Keys.ENTER)
+    # time.sleep(10)
+    # driver.close()
+    
+    # print("Guess: " + outputGuess.upper())
+    result = collect_result(driver, guessCnt)
     if result == CORRECT:
         print("I won!")
         break
@@ -108,6 +155,21 @@ def make_guess(valid_words):
     return make_guess_exhaustive(valid_words)
   else:
     return make_guess_freq(valid_words)
+
+def output_guess(driver, guess):
+      outputGuess = ""
+      outputGuess = guess
+      outputGuess = guess.replace("?", "ie")
+      outputGuess = guess.replace("/", "għ")
+
+      driver.find_element(By.CSS_SELECTOR, "td.guess_box.ng-binding.ng-scope").click()
+      actions = ActionChains(driver)
+      # actions.send_keys("papra")
+      actions.send_keys(outputGuess)
+      actions.send_keys(Keys.ENTER)
+      # actions.send_keys(outputGuess)
+      actions.perform()
+
 
 def make_guess_exhaustive(valid_words):
   all_words = getWords()
@@ -165,10 +227,29 @@ def make_guess_freq(valid_words):
   return sorted(word_scores, reverse=True)[0][1]
   
 import re
-def collect_result():
+def collect_result(driver, guessCnt):
+  result = ""
+  # ele = driver.find_element(By.XPATH, "//table/tbody/tr[1]/td[5]")
+  for letterCnt in range(1,6):
+    ele = driver.find_element(By.XPATH, "//table/tbody/tr[{guess}]/td[{letter}]".format(guess = guessCnt, letter = letterCnt))
+    letterResult = ele.get_attribute("class")
+
+    if(letterResult == "orange"):
+      result += "?"
+    elif(letterResult == "green"):
+      result += "!"
+    else:
+      result += "_"
+    
+
+  # print(result)
+  # print(ele.get_attribute("class"))
+    
+
   # Collect the result of our guess from the user
-  result = input("What's the result? (_/?/!) ")
+  # result = input("What's the result? (_/?/!) ")
   match = re.match(r'^[!?_]{5}$', result)
+
   if not match:
     print("Invalid response string, try again")
     return collect_result()
@@ -188,6 +269,8 @@ def get_result(guess, answer):
   
 def update_valid_words(valid_words, guess, result):
   #not optimized - maybe find a way to cut more words
+  
+
   
   #HARD CODE REMOVE SPECIFIC PLACES?
   return [word for word in valid_words if get_result(guess, word) == result]  #compare current word with every valid word (if they get the same result, it means they are eligible)
