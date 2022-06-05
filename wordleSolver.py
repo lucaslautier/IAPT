@@ -129,7 +129,9 @@ def solve():
     if result == CORRECT:
         print("I won!")
         break
-    valid_words = update_valid_words(valid_words, guess, result)
+
+    
+    valid_words = update_valid_words(valid_words, guess, result, 0)
     # with open('potential-guesses.txt', 'w') as f:
     # f = io.open("potential-guesses.txt", mode="w", encoding="utf-8")
 
@@ -195,7 +197,7 @@ def make_guess_exhaustive(valid_words):
     for possible_answer in valid_words:
       #get what the result be for current word
       result = get_result(possible_guess, possible_answer)    
-      num_new_valid_words = len(update_valid_words(valid_words, possible_guess, result))
+      num_new_valid_words = len(update_valid_words(valid_words, possible_guess, result, 1))
       worst_score = max(num_new_valid_words, worst_score)
       total_score += num_new_valid_words
       
@@ -267,11 +269,33 @@ def get_result(guess, answer):
       result += "?"
   return result
   
-def update_valid_words(valid_words, guess, result):
+def update_valid_words(valid_words, guess, result, hardFilter):
   #not optimized - maybe find a way to cut more words
   
+  if(hardFilter == 0):
+    for cnt, letter in enumerate(guess):
+      if result[cnt] == '!':
+        valid_words = [x for x in valid_words if letter in x]
 
-  
+      elif result[cnt] == '_':
+        valid_words = [x for x in valid_words if letter not in x]
+
+      elif result[cnt] == "?":
+        valid_words = [x for x in valid_words if letter in x]
+        tmp_validW = valid_words
+        for word in tmp_validW:
+          if word[cnt] == letter:
+            valid_words.remove(word)
+
+      for item in valid_words:
+        txt2 = item.encode('utf-8')
+        fp = open("test.txt", "ab")
+        fp.write(txt2)
+        fp = open("test.txt", "a")
+        fp.write("\n")
+
+
+  # return valid_words
   #HARD CODE REMOVE SPECIFIC PLACES?
   return [word for word in valid_words if get_result(guess, word) == result]  #compare current word with every valid word (if they get the same result, it means they are eligible)
 
