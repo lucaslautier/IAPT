@@ -86,7 +86,7 @@ def solve():
   # time.sleep(1)
   # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
   # time.sleep(1)
-
+  checkedWords = {}
   valid_words = getWords()
   valid_words = list(dict.fromkeys(valid_words))
   # for i in range(len(valid_words)):
@@ -94,7 +94,7 @@ def solve():
   guessCnt = 0
   while True:
     guessCnt += 1
-    guess = make_guess(valid_words)
+    guess = make_guess(valid_words, checkedWords)
     # outputGuess = guess
     # outputGuess = guess.replace("$", "IE")
     # outputGuess = guess.replace("/", "GĦ")
@@ -128,10 +128,11 @@ def solve():
     result = collect_result(driver, guessCnt)
     if result == CORRECT:
         print("I won!")
+        
         break
 
     
-    valid_words = update_valid_words(valid_words, guess, result, 0)
+    valid_words = update_valid_words(valid_words, guess, result, 0, checkedWords)
     # with open('potential-guesses.txt', 'w') as f:
     # f = io.open("potential-guesses.txt", mode="w", encoding="utf-8")
 
@@ -145,6 +146,10 @@ def solve():
       fp.write("\n")
 
     print()
+  
+  
+
+  
 
 
 import random
@@ -152,9 +157,9 @@ import random
 #   return random.choice(valid_words)
 from collections import Counter
 
-def make_guess(valid_words):
+def make_guess(valid_words, checkedWords):
   if len(valid_words) < 500:
-    return make_guess_exhaustive(valid_words)
+    return make_guess_exhaustive(valid_words, checkedWords)
   else:
     return make_guess_freq(valid_words)
 
@@ -173,7 +178,7 @@ def output_guess(driver, guess):
       actions.perform()
 
 
-def make_guess_exhaustive(valid_words):
+def make_guess_exhaustive(valid_words, checkedWords):
   all_words = getWords()
   #guessable_words = all_words if len(valid_words) <50 else valid_words
   #guessable_words = valid_words if len(valid_words) == 1 or len(valid_words) == 2 or len(valid_words) > 50 else all_words #if len(valid_words) <50 else valid_words
@@ -197,7 +202,7 @@ def make_guess_exhaustive(valid_words):
     for possible_answer in valid_words:
       #get what the result be for current word
       result = get_result(possible_guess, possible_answer)    
-      num_new_valid_words = len(update_valid_words(valid_words, possible_guess, result, 1))
+      num_new_valid_words = len(update_valid_words(valid_words, possible_guess, result, 1, checkedWords))
       worst_score = max(num_new_valid_words, worst_score)
       total_score += num_new_valid_words
       
@@ -243,7 +248,7 @@ def collect_result(driver, guessCnt):
     else:
       result += "_"
     
-
+  #?!_ _ _
   # print(result)
   # print(ele.get_attribute("class"))
     
@@ -269,18 +274,26 @@ def get_result(guess, answer):
       result += "?"
   return result
   
-def update_valid_words(valid_words, guess, result, hardFilter):
+def update_valid_words(valid_words, guess, result, hardFilter, checkedWords):
   #not optimized - maybe find a way to cut more words
   
+  # if len(tmpLen) == 0:
   if(hardFilter == 0):
     for cnt, letter in enumerate(guess):
+
       if result[cnt] == '!':
         valid_words = [x for x in valid_words if letter in x]
 
       elif result[cnt] == '_':
-        valid_words = [x for x in valid_words if letter not in x]
+        if letter in checkedWords.keys():
+          if(checkedWords[letter] != "?"):
+            valid_words = [x for x in valid_words if letter not in x]
+        else:
+            valid_words = [x for x in valid_words if letter not in x]
 
       elif result[cnt] == "?":
+        if letter not in checkedWords.keys():
+          checkedWords[letter] = "?"
         valid_words = [x for x in valid_words if letter in x]
         tmp_validW = valid_words
         for word in tmp_validW:
@@ -294,9 +307,15 @@ def update_valid_words(valid_words, guess, result, hardFilter):
         fp = open("test.txt", "a")
         fp.write("\n")
 
+    
+
 
   # return valid_words
-  #HARD CODE REMOVE SPECIFIC PLACES?
-  return [word for word in valid_words if get_result(guess, word) == result]  #compare current word with every valid word (if they get the same result, it means they are eligible)
+  maybeReturn = [word for word in valid_words if get_result(guess, word) == result]
+  if(len(maybeReturn) == 0):
+    return valid_words
+  else:
+    return maybeReturn
+    #return [word for word in valid_words if get_result(guess, word) == result]  #compare current word with every valid word (if they get the same result, it means they are eligible)
 
 solve()
