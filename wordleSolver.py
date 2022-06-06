@@ -300,12 +300,12 @@ def update_valid_words(valid_words, guess, result, hardFilter, checkedWords):
           if word[cnt] == letter:
             valid_words.remove(word)
 
-      for item in valid_words:
-        txt2 = item.encode('utf-8')
-        fp = open("test.txt", "ab")
-        fp.write(txt2)
-        fp = open("test.txt", "a")
-        fp.write("\n")
+      # for item in valid_words:
+      #   txt2 = item.encode('utf-8')
+      #   fp = open("test.txt", "ab")
+      #   fp.write(txt2)
+      #   fp = open("test.txt", "a")
+      #   fp.write("\n")
 
     
 
