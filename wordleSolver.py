@@ -14,22 +14,6 @@ CORRECT = '!!!!!'
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
-# driver.get("https://wordle-malti.github.io/")
-
-
-# #gets all the words
-# def getWords():
-#     valids = []
-#     #open word file/corpus
-#     with open('wordle-words.txt') as f:
-#         ALL_WORDS = [w.strip() for w in f.readlines()]
-#         #take only 5 letter words
-#         for currWord in ALL_WORDS:
-#           if len(currWord) == 5:
-#             valids.append(currWord)
-#           FIVEL_WORDS = valids
-#         return FIVEL_WORDS
-
 def getWords():
   valids = []
   allWords = []
@@ -42,18 +26,6 @@ def getWords():
     currWord = line.split(None, 1)[0].lower()
     
     # if no "għ" or "ie" are found, this is appended
-    # fnlWord = currWord
-
-    #find and change "għ" or "ie" to make it one letter ("ie" = $ || "għ" = /)
-    # for letter in range(0,len(currWord)-1):
-    #   if(currWord[letter] == "i" and currWord [letter+1] == "e"):
-    #     tmpWord = currWord[:letter] + "$" + currWord[letter+1:]
-    #     fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
-
-    #   if(currWord[letter] == "g" and currWord [letter+1] == "ħ"):
-    #     tmpWord = currWord[:letter] + "/" + currWord[letter+1:]
-    #     fnlWord = tmpWord[:letter+1] + "" + tmpWord[letter+2:]
-
     allWords.append(currWord)
 
   for currWord in allWords:
@@ -68,11 +40,11 @@ def getWords():
 
 def accept(driver):
     driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
-    time.sleep(1)
+    time.sleep(0.5)
     driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
-    time.sleep(1)
+    time.sleep(0.5)
     driver.find_element(By.CSS_SELECTOR, "button.swal2-deny.swal2-styled").click()
-    time.sleep(1)
+    time.sleep(0.5)
 
 #main class
 def solve():
@@ -80,12 +52,10 @@ def solve():
   driver.get("https://wordle-malti.github.io/")
 
   accept(driver)
-  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
-  # time.sleep(1)
-  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
-  # time.sleep(1)
-  # driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm.swal2-styled").click()
-  # time.sleep(1)
+
+  #for time statistic
+  start_time = time.time()
+
   checkedWords = {}
   valid_words = getWords()
   valid_words = list(dict.fromkeys(valid_words))
@@ -95,48 +65,17 @@ def solve():
   while True:
     guessCnt += 1
     guess = make_guess(valid_words, checkedWords)
-    # outputGuess = guess
-    # outputGuess = guess.replace("$", "IE")
-    # outputGuess = guess.replace("/", "GĦ")
 
     output_guess(driver, guess)
     
-    # write.send_keys("baqra")
-    
-    # write guess into website
-    # driver.find_element(By.CSS_SELECTOR, "td.guess_box.ng-binding.ng-scope").click()
-    # actions = ActionChains(driver)
-    # # actions.send_keys("papra")
-    # actions.send_keys(outputGuess)
-    # actions.send_keys(Keys.ENTER)
-    # # actions.send_keys(outputGuess)
-    # actions.perform()
-
-    # get result
-    #get class - grey iws "td", orange has .orange green has .green
-    #table = driver.find_element(By.ID, "inp_table" )
-    # ele = driver.find_element(By.XPATH, "//table/tbody/tr[1]/td[5]")
-    # print(ele.get_attribute("class"))
-    #print(ele.get_attribute("background-color"))
-
-
-    # write.send_keys(Keys.ENTER)
-    # time.sleep(10)
-    # driver.close()
-    
-    # print("Guess: " + outputGuess.upper())
     result = collect_result(driver, guessCnt)
     if result == CORRECT:
         print("I won!")
-        
+
+        print("Time taken: " + "--- %s seconds ---" % (time.time() - start_time))
         break
 
-    
     valid_words = update_valid_words(valid_words, guess, result, 0, checkedWords)
-    # with open('potential-guesses.txt', 'w') as f:
-    # f = io.open("potential-guesses.txt", mode="w", encoding="utf-8")
-
-    #FIX THIS
     
     for item in valid_words:
       txt2 = item.encode('utf-8')
@@ -146,15 +85,9 @@ def solve():
       fp.write("\n")
 
     print()
-  
-  
-
-  
 
 
 import random
-# def make_guess(valid_words):
-#   return random.choice(valid_words)
 from collections import Counter
 
 def make_guess(valid_words, checkedWords):
@@ -248,13 +181,7 @@ def collect_result(driver, guessCnt):
     else:
       result += "_"
     
-  #?!_ _ _
-  # print(result)
-  # print(ele.get_attribute("class"))
-    
-
   # Collect the result of our guess from the user
-  # result = input("What's the result? (_/?/!) ")
   match = re.match(r'^[!?_]{5}$', result)
 
   if not match:
@@ -275,9 +202,6 @@ def get_result(guess, answer):
   return result
   
 def update_valid_words(valid_words, guess, result, hardFilter, checkedWords):
-  #not optimized - maybe find a way to cut more words
-  
-  # if len(tmpLen) == 0:
   if(hardFilter == 0):
     for cnt, letter in enumerate(guess):
 
@@ -285,11 +209,27 @@ def update_valid_words(valid_words, guess, result, hardFilter, checkedWords):
         valid_words = [x for x in valid_words if letter in x]
 
       elif result[cnt] == '_':
+        # if not already seen in dictionary as green or orange
         if letter in checkedWords.keys():
-          if(checkedWords[letter] != "?"):
+          if(checkedWords[letter] != "?" and checkedWords[letter] != "!"):
             valid_words = [x for x in valid_words if letter not in x]
+        
+        #if it has not been seen in dictionary
         else:
-            valid_words = [x for x in valid_words if letter not in x]
+          #check if its a duplicate( since they act different) - if this is grey there might be a green/orange later in word
+            isDup = False
+            secondCnt = 0
+            nextL = cnt+1
+            for otherL in guess[nextL::]:
+              secondCnt += 1
+              if otherL == letter:
+                isDup == True
+                check = cnt+secondCnt
+                if result[check] == "_":
+                  valid_words = [x for x in valid_words if letter not in x]
+
+            if isDup == False:
+              valid_words = [x for x in valid_words if letter not in x]
 
       elif result[cnt] == "?":
         if letter not in checkedWords.keys():
@@ -300,16 +240,7 @@ def update_valid_words(valid_words, guess, result, hardFilter, checkedWords):
           if word[cnt] == letter:
             valid_words.remove(word)
 
-      # for item in valid_words:
-      #   txt2 = item.encode('utf-8')
-      #   fp = open("test.txt", "ab")
-      #   fp.write(txt2)
-      #   fp = open("test.txt", "a")
-      #   fp.write("\n")
-
     
-
-
   # return valid_words
   maybeReturn = [word for word in valid_words if get_result(guess, word) == result]
   if(len(maybeReturn) == 0):
